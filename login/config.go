@@ -3,6 +3,8 @@ package login
 import (
 	"crypto/rand"
 	"encoding/hex"
+	"fmt"
+	"strings"
 	"time"
 )
 
@@ -53,6 +55,16 @@ func init() {
 	}
 }
 
+// Adds the options for a provider in the form of key=value,key=value...
+func (c *Config) addOauthOpts(providerName, optsKvList string) error {
+	opts, err := parseOptions(optsKvList)
+	if err != nil {
+		return err
+	}
+	c.Oauth[providerName] = opts
+	return nil
+}
+
 // Default config for the loginsrv handler
 func DefaultConfig() *Config {
 	return &Config{
@@ -90,4 +102,17 @@ func randStringBytes(n int) (string, error) {
 		return "", err
 	}
 	return hex.EncodeToString(b), nil
+}
+
+func parseOptions(b string) (map[string]string, error) {
+	opts := map[string]string{}
+	pairs := strings.Split(b, ",")
+	for _, p := range pairs {
+		pair := strings.SplitN(p, "=", 2)
+		if len(pair) != 2 {
+			return nil, fmt.Errorf("provider configuration has to be in form 'key1=value1,key2=..', but was %v", p)
+		}
+		opts[pair[0]] = pair[1]
+	}
+	return opts, nil
 }
