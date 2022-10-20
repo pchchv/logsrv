@@ -3,7 +3,45 @@ package login
 import (
 	"crypto/rand"
 	"encoding/hex"
+	"time"
 )
+
+// Config for the loginsrv handler
+type Config struct {
+	Host                   string
+	Port                   string
+	LogLevel               string
+	TextLogging            bool
+	JwtSecret              string
+	JwtSecretFile          string
+	JwtAlgo                string
+	JwtExpiry              time.Duration
+	JwtRefreshes           int
+	SuccessURL             string
+	Redirect               bool
+	RedirectQueryParameter string
+	RedirectCheckReferer   bool
+	RedirectHostFile       string
+	LogoutURL              string
+	Template               string
+	LoginPath              string
+	CookieName             string
+	CookieExpiry           time.Duration
+	CookieDomain           string
+	CookieHTTPOnly         bool
+	CookieSecure           bool
+	Backends               Options
+	Oauth                  Options
+	GracePeriod            time.Duration
+	UserFile               string
+	UserEndpoint           string
+	UserEndpointToken      string
+	UserEndpointTimeout    time.Duration
+}
+
+// Configuration structure for oauth and backend provider
+// key is the providername, value is a options map
+type Options map[string]map[string]string
 
 var jwtDefaultSecret string
 
@@ -12,6 +50,36 @@ func init() {
 	jwtDefaultSecret, err = randStringBytes(64)
 	if err != nil {
 		panic(err)
+	}
+}
+
+// Default config for the loginsrv handler
+func DefaultConfig() *Config {
+	return &Config{
+		Host:                   "localhost",
+		Port:                   "6789",
+		LogLevel:               "info",
+		JwtSecret:              jwtDefaultSecret,
+		JwtAlgo:                "HS512",
+		JwtExpiry:              24 * time.Hour,
+		JwtRefreshes:           0,
+		SuccessURL:             "/",
+		Redirect:               true,
+		RedirectQueryParameter: "backTo",
+		RedirectCheckReferer:   true,
+		RedirectHostFile:       "",
+		LogoutURL:              "",
+		LoginPath:              "/login",
+		CookieName:             "jwt_token",
+		CookieHTTPOnly:         true,
+		CookieSecure:           true,
+		Backends:               Options{},
+		Oauth:                  Options{},
+		GracePeriod:            5 * time.Second,
+		UserFile:               "",
+		UserEndpoint:           "",
+		UserEndpointToken:      "",
+		UserEndpointTimeout:    5 * time.Second,
 	}
 }
 
