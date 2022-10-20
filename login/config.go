@@ -7,6 +7,7 @@ import (
 	"flag"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"strings"
 	"time"
 
@@ -52,6 +53,8 @@ type Config struct {
 type Options map[string]map[string]string
 
 var jwtDefaultSecret string
+
+const envPrefix = "LOGSRV_"
 
 func init() {
 	var err error
@@ -190,6 +193,36 @@ func DefaultConfig() *Config {
 	}
 }
 
+// Read config from the commandline args
+func ReadConfig() *Config {
+	c, err := readConfig(flag.CommandLine, os.Args[1:])
+	if err != nil {
+		// Should never happen, because of flag default policy ExitOnError
+		panic(err)
+	}
+	return c
+}
+
+func readConfig(f *flag.FlagSet, args []string) (*Config, error) {
+	config := DefaultConfig()
+	config.ConfigureFlagSet(f)
+	// Fist use the environment settings
+	f.VisitAll(func(f *flag.Flag) {
+		if val, isPresent := os.LookupEnv(envName(f.Name)); isPresent {
+			f.Value.Set(val)
+		}
+	})
+	// Prefer flags over environment settings
+	err := f.Parse(args)
+	if err != nil {
+		return nil, err
+	}
+	if err := config.ResolveFileReferences(); err != nil {
+		return nil, err
+	}
+	return config, err
+}
+
 func randStringBytes(n int) (string, error) {
 	b := make([]byte, n)
 	_, err := rand.Read(b)
@@ -197,6 +230,10 @@ func randStringBytes(n int) (string, error) {
 		return "", err
 	}
 	return hex.EncodeToString(b), nil
+}
+
+func envName(flagName string) string {
+	return envPrefix + strings.Replace(strings.ToUpper(flagName), "-", "_", -1)
 }
 
 func parseOptions(b string) (map[string]string, error) {
