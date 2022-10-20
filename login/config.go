@@ -4,6 +4,7 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+	"io/ioutil"
 	"strings"
 	"time"
 )
@@ -62,6 +63,29 @@ func (c *Config) addOauthOpts(providerName, optsKvList string) error {
 		return err
 	}
 	c.Oauth[providerName] = opts
+	return nil
+}
+
+// Adds the options for a provider in the form of key=value,key=value...
+func (c *Config) addBackendOpts(providerName, optsKvList string) error {
+	opts, err := parseOptions(optsKvList)
+	if err != nil {
+		return err
+	}
+	c.Backends[providerName] = opts
+	return nil
+}
+
+// Resolves configuration values, which are dynamically referenced via files
+func (c *Config) ResolveFileReferences() error {
+	// Try to load the secret from a file, if set
+	if c.JwtSecretFile != "" {
+		secretBytes, err := ioutil.ReadFile(c.JwtSecretFile)
+		if err != nil {
+			return err
+		}
+		c.JwtSecret = string(secretBytes)
+	}
 	return nil
 }
 
