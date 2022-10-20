@@ -3,10 +3,15 @@ package login
 import (
 	"crypto/rand"
 	"encoding/hex"
+	"errors"
+	"flag"
 	"fmt"
 	"io/ioutil"
 	"strings"
 	"time"
+
+	"github.com/pchchv/logsrv/logging"
+	"github.com/pchchv/logsrv/oauth2"
 )
 
 // Config for the loginsrv handler
@@ -87,6 +92,72 @@ func (c *Config) ResolveFileReferences() error {
 		c.JwtSecret = string(secretBytes)
 	}
 	return nil
+}
+
+// Adds all flags to the supplied flag set
+func (c *Config) ConfigureFlagSet(f *flag.FlagSet) {
+	f.StringVar(&c.Host, "host", c.Host, "The host to listen on")
+	f.StringVar(&c.Port, "port", c.Port, "The port to listen on")
+	f.StringVar(&c.LogLevel, "log-level", c.LogLevel, "The log level")
+	f.BoolVar(&c.TextLogging, "text-logging", c.TextLogging, "Log in text format instead of json")
+	f.StringVar(&c.JwtSecret, "jwt-secret", c.JwtSecret, "The secret to sign the jwt token")
+	f.StringVar(&c.JwtSecretFile, "jwt-secret-file", c.JwtSecretFile, "Path to a file containing the secret to sign the jwt token (overrides jwt-secret)")
+	f.StringVar(&c.JwtAlgo, "jwt-algo", c.JwtAlgo, "The singing algorithm to use (ES256, ES384, ES512, RS256, RS384, RS512, HS256, HS384, HS512")
+	f.DurationVar(&c.JwtExpiry, "jwt-expiry", c.JwtExpiry, "The expiry duration for the jwt token, e.g. 2h or 3h30m")
+	f.IntVar(&c.JwtRefreshes, "jwt-refreshes", c.JwtRefreshes, "The maximum amount of jwt refreshes. 0 by Default")
+	f.StringVar(&c.CookieName, "cookie-name", c.CookieName, "The name of the jwt cookie")
+	f.BoolVar(&c.CookieHTTPOnly, "cookie-http-only", c.CookieHTTPOnly, "Set the cookie with the http only flag")
+	f.BoolVar(&c.CookieSecure, "cookie-secure", c.CookieSecure, "Set the cookie with the secure flag")
+	f.DurationVar(&c.CookieExpiry, "cookie-expiry", c.CookieExpiry, "The expiry duration for the cookie, e.g. 2h or 3h30m. Default is browser session")
+	f.StringVar(&c.CookieDomain, "cookie-domain", c.CookieDomain, "The optional domain parameter for the cookie")
+	f.StringVar(&c.SuccessURL, "success-url", c.SuccessURL, "The url to redirect after login")
+	f.BoolVar(&c.Redirect, "redirect", c.Redirect, "Allow dynamic overwriting of the the success by query parameter")
+	f.StringVar(&c.RedirectQueryParameter, "redirect-query-parameter", c.RedirectQueryParameter, "URL parameter for the redirect target")
+	f.BoolVar(&c.RedirectCheckReferer, "redirect-check-referer", c.RedirectCheckReferer, "When redirecting check that the referer is the same domain")
+	f.StringVar(&c.RedirectHostFile, "redirect-host-file", c.RedirectHostFile, "A file containing a list of domains that redirects are allowed to, one domain per line")
+	f.StringVar(&c.LogoutURL, "logout-url", c.LogoutURL, "The url or path to redirect after logout")
+	f.StringVar(&c.Template, "template", c.Template, "An alternative template for the login form")
+	f.StringVar(&c.LoginPath, "login-path", c.LoginPath, "The path of the login resource")
+	f.DurationVar(&c.GracePeriod, "grace-period", c.GracePeriod, "Graceful shutdown grace period")
+	f.StringVar(&c.UserFile, "user-file", c.UserFile, "A YAML file with user specific data for the tokens")
+	f.StringVar(&c.UserEndpoint, "user-endpoint", c.UserEndpoint, "URL of an endpoint providing user specific data for the tokens")
+	f.StringVar(&c.UserEndpointToken, "user-endpoint-token", c.UserEndpointToken, "Authentication token used when communicating with the user endpoint")
+	f.DurationVar(&c.UserEndpointTimeout, "user-endpoint-timeout", c.UserEndpointTimeout, "Timeout used when communicating with the user endpoint")
+	// the backends is deprecated, but we support it for backwards compatibility
+	deprecatedBackends := wrapFunc(func(optsKvList string) error {
+		logging.Logger.Warn("DEPRECATED: '-backend' is no longer supported. Please set the backends by explicit parameters")
+		opts, err := parseOptions(optsKvList)
+		if err != nil {
+			return err
+		}
+		pName, ok := opts["provider"]
+		if !ok {
+			return errors.New("missing provider name provider=...")
+		}
+		delete(opts, "provider")
+		c.Backends[pName] = opts
+		return nil
+	})
+	f.Var(deprecatedBackends, "backend", "Deprecated, please use the explicit flags")
+	// One option for each oauth provider
+	for _, pName := range oauth2.ProviderList() {
+		func(pName string) {
+			setter := wrapFunc(func(optsKvList string) error {
+				return c.addOauthOpts(pName, optsKvList)
+			})
+			f.Var(setter, pName, "Oauth config in the form: client_id=..,client_secret=..[,scope=..,][redirect_uri=..]")
+		}(pName)
+	}
+	// One option for each backend provider
+	for _, pName := range ProviderList() {
+		func(pName string) {
+			setter := wrapFunc(func(optsKvList string) error {
+				return c.addBackendOpts(pName, optsKvList)
+			})
+			desc, _ := GetProviderDescription(pName)
+			f.Var(setter, pName, desc.HelpText)
+		}(pName)
+	}
 }
 
 // Default config for the loginsrv handler
