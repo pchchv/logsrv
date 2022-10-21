@@ -2,6 +2,7 @@ package logging
 
 import (
 	"encoding/json"
+	"net/http"
 	"os"
 	"strings"
 	"time"
@@ -36,6 +37,15 @@ func Set(level string, textLogging bool) error {
 	logger.Level = l
 	Logger = logger
 	return nil
+}
+
+// Return a log entry for application logs, prefilled with the correlation ids out of the supplied request
+func Application(h http.Header) *logrus.Entry {
+	fields := logrus.Fields{
+		"type": "application",
+	}
+	setCorrelationIds(fields, h)
+	return Logger.WithFields(fields)
 }
 
 // Logs the start of an application with the configuration struct or map as paramter
@@ -89,4 +99,16 @@ func ServerClosed(appName string) {
 		fields["build_number"] = os.Getenv("BUILD_NUMBER")
 	}
 	Logger.WithFields(fields).Infof("http server was closed: %v", appName)
+}
+
+func setCorrelationIds(fields logrus.Fields, h http.Header) {
+	correlationId := GetCorrelationId(h)
+	if correlationId != "" {
+		fields["correlation_id"] = correlationId
+	}
+
+	userCorrelationId := GetUserCorrelationId(h)
+	if userCorrelationId != "" {
+		fields["user_correlation_id"] = userCorrelationId
+	}
 }
