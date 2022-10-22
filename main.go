@@ -12,6 +12,7 @@ import (
 	_ "github.com/pchchv/logsrv/httpupstream"
 	"github.com/pchchv/logsrv/logging"
 	"github.com/pchchv/logsrv/login"
+	_ "github.com/pchchv/logsrv/osiam"
 )
 
 const appName = "logsrv"
