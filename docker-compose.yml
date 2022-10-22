@@ -1,0 +1,10 @@
+version: "3.9"
+
+services:
+  app:
+    container_name: logsvr
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "${PORT}:${PORT}"
