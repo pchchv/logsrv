@@ -3,6 +3,14 @@ package login
 // Factory method for creation of login backends
 type Provider func(config map[string]string) (Backend, error)
 
+// Holds the provider metadata for the help message
+type ProviderDescription struct {
+	// Name of the provider
+	Name string
+	// Text for the commandline option
+	HelpText string
+}
+
 var provider = map[string]Provider{}
 var providerDescription = map[string]*ProviderDescription{}
 

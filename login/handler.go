@@ -39,6 +39,13 @@ type oauthManager interface {
 	GetConfigFromRequest(r *http.Request) (oauth2.Config, error)
 }
 
+const (
+	contentTypeHTML  = "text/html; charset=utf-8"
+	contentTypeJWT   = "application/jwt"
+	contentTypeJSON  = "application/json"
+	contentTypePlain = "text/plain"
+)
+
 // Creates a login handler based on the supplied configuration
 func NewHandler(config *Config) (*Handler, error) {
 	if len(config.Backends) == 0 && len(config.Oauth) == 0 {
@@ -75,26 +82,17 @@ func NewHandler(config *Config) (*Handler, error) {
 	}, nil
 }
 
-const (
-	contentTypeHTML  = "text/html; charset=utf-8"
-	contentTypeJWT   = "application/jwt"
-	contentTypeJSON  = "application/json"
-	contentTypePlain = "text/plain"
-)
-
 func (h *Handler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	if !strings.HasPrefix(r.URL.Path, h.config.LoginPath) {
 		h.respondNotFound(w, r)
 		return
 	}
 	h.setRedirectCookie(w, r)
-
 	_, err := h.oauth.GetConfigFromRequest(r)
 	if err == nil {
 		h.handleOauth(w, r)
 		return
 	}
-
 	h.handleLogin(w, r)
 }
 
@@ -117,7 +115,6 @@ func (h *Handler) handleOauth(w http.ResponseWriter, r *http.Request) {
 	}
 	logging.Application(r.Header).
 		WithField("username", userInfo.Sub).Info("failed authentication")
-
 	h.respondAuthFailure(w, r)
 }
 
@@ -132,7 +129,6 @@ func (h *Handler) handleLogin(w http.ResponseWriter, r *http.Request) {
 		h.respondBadRequest(w, r)
 		return
 	}
-
 	r.ParseForm()
 	if r.Method == "DELETE" || r.FormValue("logout") == "true" {
 		h.deleteToken(w)
@@ -147,7 +143,6 @@ func (h *Handler) handleLogin(w http.ResponseWriter, r *http.Request) {
 			})
 		return
 	}
-
 	if r.Method == "GET" {
 		userInfo, valid := h.GetToken(r)
 		if wantJSON(r) {
@@ -168,7 +163,6 @@ func (h *Handler) handleLogin(w http.ResponseWriter, r *http.Request) {
 			})
 		return
 	}
-
 	if r.Method == "POST" {
 		username, password, err := getCredentials(r)
 		if err != nil {
