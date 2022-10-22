@@ -6,6 +6,8 @@ This middleware is designed to play together with the [caddy-jwt](https://github
 
 For a full documentation of logsrv configuration and usage, visit the [logsrv README.md](https://github.com/pchchv/logsrv).
 
+A small demo can be found in the [./demo](https://github.com/pchchv/logsrv/tree/master/caddy/demo) directory.
+
 ## Configuration of `JWT_SECRET`
 
 The jwt secret is taken from the environment variable `JWT_SECRET` if this variable is set.
