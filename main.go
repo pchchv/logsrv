@@ -9,6 +9,7 @@ import (
 	"syscall"
 
 	_ "github.com/pchchv/logsrv/htpasswd"
+	_ "github.com/pchchv/logsrv/httpupstream"
 	"github.com/pchchv/logsrv/logging"
 	"github.com/pchchv/logsrv/login"
 )
