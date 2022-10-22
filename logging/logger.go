@@ -28,7 +28,6 @@ func Set(level string, textLogging bool) error {
 	if err != nil {
 		return err
 	}
-
 	logger := logrus.New()
 	if textLogging {
 		logger.Formatter = &logrus.TextFormatter{}
@@ -96,8 +95,62 @@ func access(r *http.Request, start time.Time, statusCode int, err error) *logrus
 	if len(cookies) > 0 {
 		fields["cookies"] = cookies
 	}
-
 	return Logger.WithFields(fields)
+}
+
+// Logs the result of an outgoing call
+func Call(r *http.Request, resp *http.Response, start time.Time, err error) {
+	url := r.URL.Path
+	if r.URL.RawQuery != "" {
+		url += "?" + r.URL.RawQuery
+	}
+	fields := logrus.Fields{
+		"type":       "call",
+		"@timestamp": start,
+		"host":       r.Host,
+		"url":        url,
+		"full_url":   r.URL.String(),
+		"method":     r.Method,
+		"duration":   time.Since(start).Nanoseconds() / 1000000,
+	}
+	setCorrelationIds(fields, r.Header)
+	if err != nil {
+		fields[logrus.ErrorKey] = err.Error()
+		Logger.WithFields(fields).Error(err)
+		return
+	}
+	if resp != nil {
+		fields["response_status"] = resp.StatusCode
+		fields["content_type"] = resp.Header.Get("Content-Type")
+		e := Logger.WithFields(fields)
+		msg := fmt.Sprintf("%v %v-> %v", resp.StatusCode, r.Method, r.URL.String())
+		if resp.StatusCode >= 200 && resp.StatusCode <= 399 {
+			e.Info(msg)
+		} else if resp.StatusCode >= 400 && resp.StatusCode <= 499 {
+			e.Warn(msg)
+		} else {
+			e.Error(msg)
+		}
+		return
+	}
+	Logger.WithFields(fields).Warn("call, but no response given")
+}
+
+// Logs the hit information a accessing a ressource
+func Cacheinfo(url string, hit bool) {
+	var msg string
+	if hit {
+		msg = fmt.Sprintf("cache hit: %v", url)
+	} else {
+		msg = fmt.Sprintf("cache miss: %v", url)
+	}
+	Logger.WithFields(
+		logrus.Fields{
+			"type": "cacheinfo",
+			"url":  url,
+			"hit":  hit,
+		}).
+		Debug(msg)
 }
 
 // Return a log entry for application logs, prefilled with the correlation ids out of the supplied request
@@ -177,7 +230,6 @@ func setCorrelationIds(fields logrus.Fields, h http.Header) {
 	if correlationId != "" {
 		fields["correlation_id"] = correlationId
 	}
-
 	userCorrelationId := GetUserCorrelationId(h)
 	if userCorrelationId != "" {
 		fields["user_correlation_id"] = userCorrelationId
