@@ -35,7 +35,10 @@ func Test_LogMiddleware_Log_implicit200(t *testing.T) {
 	Logger.Out = b
 	// and a handler which gets an 200er code implicitly
 	lm := NewLogMiddleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Write([]byte("hello"))
+		_, err := w.Write([]byte("hello"))
+		if err != nil {
+			t.Fatal(err)
+		}
 	}))
 	r, _ := http.NewRequest("GET", "http://www.example.org/foo", nil)
 	lm.ServeHTTP(httptest.NewRecorder(), r)

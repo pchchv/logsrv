@@ -39,7 +39,8 @@ func (manager *Manager) Handle(w http.ResponseWriter, r *http.Request) (
 	startedFlow bool,
 	authenticated bool,
 	userInfo model.UserInfo,
-	err error) {
+	err error,
+) {
 	if r.FormValue("error") != "" {
 		return false, false, model.UserInfo{}, fmt.Errorf("error: %v", r.FormValue("error"))
 	}
@@ -58,7 +59,10 @@ func (manager *Manager) Handle(w http.ResponseWriter, r *http.Request) (
 		}
 		return false, true, userInfo, err
 	}
-	manager.startFlow(cfg, w)
+	err = manager.startFlow(cfg, w)
+	if err != nil {
+		return true, false, model.UserInfo{}, err
+	}
 	return true, false, model.UserInfo{}, nil
 }
 

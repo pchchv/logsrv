@@ -3,7 +3,7 @@ package login
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -129,7 +129,10 @@ func (h *Handler) handleLogin(w http.ResponseWriter, r *http.Request) {
 		h.respondBadRequest(w, r)
 		return
 	}
-	r.ParseForm()
+	err := r.ParseForm()
+	if err != nil {
+		panic(err)
+	}
 	if r.Method == "DELETE" || r.FormValue("logout") == "true" {
 		h.deleteToken(w)
 		if h.config.LogoutURL != "" {
@@ -149,7 +152,7 @@ func (h *Handler) handleLogin(w http.ResponseWriter, r *http.Request) {
 			if valid {
 				w.Header().Set("Content-Type", contentTypeJSON)
 				enc := json.NewEncoder(w)
-				enc.Encode(userInfo) // ignore error of encoding
+				_ = enc.Encode(userInfo) // ignore error of encoding
 			} else {
 				h.respondAuthFailure(w, r)
 			}
@@ -405,7 +408,7 @@ func (h *Handler) GetToken(r *http.Request) (userInfo model.UserInfo, valid bool
 func getCredentials(r *http.Request) (string, string, error) {
 	if strings.HasPrefix(r.Header.Get("Content-Type"), contentTypeJSON) {
 		m := map[string]string{}
-		body, err := ioutil.ReadAll(r.Body)
+		body, err := io.ReadAll(r.Body)
 		if err != nil {
 			return "", "", err
 		}

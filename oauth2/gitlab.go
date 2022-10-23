@@ -3,7 +3,7 @@ package oauth2
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 
@@ -47,7 +47,7 @@ var providerGitlab = Provider{
 		if respUser.StatusCode != 200 {
 			return model.UserInfo{}, "", fmt.Errorf("got http status %v on gitlab get user info", respUser.StatusCode)
 		}
-		b, err := ioutil.ReadAll(respUser.Body)
+		b, err := io.ReadAll(respUser.Body)
 		if err != nil {
 			return model.UserInfo{}, "", fmt.Errorf("error reading gitlab get user info: %v", err)
 		}
@@ -69,7 +69,7 @@ var providerGitlab = Provider{
 		if respGroup.StatusCode != 200 {
 			return model.UserInfo{}, "", fmt.Errorf("got http status %v on gitlab get groups info", respGroup.StatusCode)
 		}
-		g, err := ioutil.ReadAll(respGroup.Body)
+		g, err := io.ReadAll(respGroup.Body)
 		if err != nil {
 			return model.UserInfo{}, "", fmt.Errorf("error reading gitlab get groups info: %v", err)
 		}

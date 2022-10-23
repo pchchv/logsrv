@@ -19,7 +19,10 @@ var (
 )
 
 func init() {
-	Set("info", false)
+	err := Set("info", false)
+	if err != nil {
+		logrus.Panic(err)
+	}
 }
 
 // Set creates a new Logger with the matching specification

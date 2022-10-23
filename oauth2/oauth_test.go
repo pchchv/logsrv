@@ -2,7 +2,7 @@ package oauth2
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -23,7 +23,10 @@ var testConfig = Config{
 
 func Test_StartFlow(t *testing.T) {
 	resp := httptest.NewRecorder()
-	StartFlow(testConfig, resp)
+	err := StartFlow(testConfig, resp)
+	if err != nil {
+		t.Fatal(err)
+	}
 	Equal(t, http.StatusFound, resp.Code)
 	// assert that we received a state cookie
 	cHeader := strings.Split(resp.Header().Get("Set-Cookie"), ";")[0]
@@ -45,10 +48,13 @@ func Test_Authenticate(t *testing.T) {
 		Equal(t, "POST", r.Method)
 		Equal(t, "application/x-www-form-urlencoded", r.Header.Get("Content-Type"))
 		Equal(t, "application/json", r.Header.Get("Accept"))
-		body, _ := ioutil.ReadAll(r.Body)
+		body, _ := io.ReadAll(r.Body)
 		Equal(t, "client_id=client42&client_secret=secret&code=theCode&grant_type=authorization_code&redirect_uri=http%3A%2F%2Flocalhost%2Fcallback", string(body))
 		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(`{"access_token":"e72e16c7e42f292c6912e7710c838347ae178b4a", "scope":"repo gist", "token_type":"bearer"}`))
+		_, err := w.Write([]byte(`{"access_token":"e72e16c7e42f292c6912e7710c838347ae178b4a", "scope":"repo gist", "token_type":"bearer"}`))
+		if err != nil {
+			t.Fatal(err)
+		}
 	}))
 	defer server.Close()
 	testConfigCopy := testConfig
@@ -70,7 +76,10 @@ func Test_Authenticate_CodeExchangeError(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(testReturnCode)
 		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(testResponseJSON))
+		_, err := w.Write([]byte(testResponseJSON))
+		if err != nil {
+			t.Fatal(err)
+		}
 	}))
 	defer server.Close()
 	testConfigCopy := testConfig
@@ -154,7 +163,10 @@ func Test_Authentication_TokenParseError(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(200)
 		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(`{"access_t`))
+		_, err := w.Write([]byte(`{"access_t`))
+		if err != nil {
+			t.Fatal(err)
+		}
 	}))
 	defer server.Close()
 	testConfigCopy := testConfig

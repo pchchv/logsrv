@@ -5,8 +5,6 @@ import (
 	"os"
 	"testing"
 
-	"io/ioutil"
-
 	"github.com/pchchv/logsrv/oauth2"
 	. "github.com/stretchr/testify/assert"
 )
@@ -84,7 +82,7 @@ func TestRedirect_PreventExternal(t *testing.T) {
 }
 
 func TestRedirect_Whitelisting(t *testing.T) {
-	whitelistFile, _ := ioutil.TempFile("", "logsrv_test_domains_whitelist")
+	whitelistFile, _ := os.CreateTemp("", "logsrv_test_domains_whitelist")
 	whitelistFile.Close()
 	os.Remove(whitelistFile.Name())
 	// redirect to success url if domains whitelist file doesn't exist
@@ -103,7 +101,7 @@ func TestRedirect_Whitelisting(t *testing.T) {
 	Equal(t, "/", recorder.Header().Get("Location"))
 	// setup domain whitelist file
 	domains := []byte("foo.com\ngooddomain.com \nbar.com")
-	_ = ioutil.WriteFile(whitelistFile.Name(), domains, 0644)
+	_ = os.WriteFile(whitelistFile.Name(), domains, 0o644)
 	defer os.Remove(whitelistFile.Name())
 	// allow redirect to domains on whitelist
 	recorder = httptest.NewRecorder()

@@ -2,8 +2,8 @@ package login
 
 import (
 	"bytes"
-	"io/ioutil"
 	"net/http"
+	"os"
 	"strings"
 	"text/template"
 
@@ -144,18 +144,24 @@ func writeLoginForm(w http.ResponseWriter, params loginFormData) {
 	t := template.New(templateName).Funcs(funcMap)
 	t = template.Must(t.Parse(partials))
 	if params.Config != nil && params.Config.Template != "" {
-		customTemplate, err := ioutil.ReadFile(params.Config.Template)
+		customTemplate, err := os.ReadFile(params.Config.Template)
 		if err != nil {
 			logging.Logger.WithError(err).Error()
 			w.WriteHeader(500)
-			w.Write([]byte(`Internal Server Error`))
+			_, err = w.Write([]byte(`Internal Server Error`))
+			if err != nil {
+				panic(err)
+			}
 			return
 		}
 		t, err = t.Parse(string(customTemplate))
 		if err != nil {
 			logging.Logger.WithError(err).Error()
 			w.WriteHeader(500)
-			w.Write([]byte(`Internal Server Error`))
+			_, err = w.Write([]byte(`Internal Server Error`))
+			if err != nil {
+				panic(err)
+			}
 			return
 		}
 	} else {
@@ -166,7 +172,10 @@ func writeLoginForm(w http.ResponseWriter, params loginFormData) {
 	if err != nil {
 		logging.Logger.WithError(err).Error()
 		w.WriteHeader(500)
-		w.Write([]byte(`Internal Server Error`))
+		_, err = w.Write([]byte(`Internal Server Error`))
+		if err != nil {
+			panic(err)
+		}
 		return
 	}
 	w.Header().Set("Cache-Control", "no-cache, no-store, must-revalidate")
@@ -174,7 +183,10 @@ func writeLoginForm(w http.ResponseWriter, params loginFormData) {
 	if params.Error {
 		w.WriteHeader(500)
 	}
-	w.Write(b.Bytes())
+	_, err = w.Write(b.Bytes())
+	if err != nil {
+		panic(err)
+	}
 }
 
 func ucfirst(in string) string {

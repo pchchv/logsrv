@@ -89,12 +89,18 @@ func (suite *BitbucketTestSuite) SetupTest() {
 	userHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		suite.Equal("secret", r.FormValue("access_token"))
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		w.Write([]byte(bitbucketTestUserResponse))
+		_, err := w.Write([]byte(bitbucketTestUserResponse))
+		if err != nil {
+			panic(err)
+		}
 	})
 	emailHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		suite.Equal("secret", r.FormValue("access_token"))
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		w.Write([]byte(bitbucketTestUserEmailResponse))
+		_, err := w.Write([]byte(bitbucketTestUserEmailResponse))
+		if err != nil {
+			panic(err)
+		}
 	})
 	r.HandleFunc("/user", userHandler)
 	r.HandleFunc("/user/emails", emailHandler)

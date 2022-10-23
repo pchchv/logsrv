@@ -35,8 +35,16 @@ type logReccord struct {
 func Test_Logger_Set(t *testing.T) {
 	a := assert.New(t)
 	// given: an error logger in text format
-	Set("error", true)
-	defer Set("info", false)
+	err := Set("error", true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() {
+		err := Set("info", false)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}()
 	Logger.Formatter.(*logrus.TextFormatter).DisableColors = true
 	b := bytes.NewBuffer(nil)
 	Logger.Out = b
@@ -280,8 +288,16 @@ func Test_Logger_ServerClosed(t *testing.T) {
 func Test_Logger_Cacheinfo(t *testing.T) {
 	a := assert.New(t)
 	// given a logger
-	Set("debug", false)
-	defer Set("info", false)
+	err := Set("debug", false)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer func() {
+		err = Set("info", false)
+		if err != nil {
+			t.Fatal(err)
+		}
+	}()
 	b := bytes.NewBuffer(nil)
 	Logger.Out = b
 	// when a positive cachinfo is logged

@@ -2,7 +2,7 @@ package osiam
 
 import (
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -56,7 +56,6 @@ func TestClient_GetTokenByPasswordErrorCases(t *testing.T) {
 	client = NewClient("://", "example-client", "secret")
 	_, _, err = client.GetTokenByPassword("admin", "koala")
 	Error(t, err)
-
 }
 
 func TestClient_GetTokenByPasswordInvalidJson(t *testing.T) {
@@ -64,7 +63,6 @@ func TestClient_GetTokenByPasswordInvalidJson(t *testing.T) {
 		w.Header().Set("Content-Type", "application/json;charset=UTF-8")
 		w.WriteHeader(200)
 		fmt.Fprintf(w, "{...")
-		return
 	}))
 	defer server.Close()
 	client := NewClient(server.URL, "example-client", "secret")
@@ -77,7 +75,6 @@ func TestClient_GetTokenByPasswordUnknownError(t *testing.T) {
 		w.Header().Set("Content-Type", "application/json;charset=UTF-8")
 		w.WriteHeader(201)
 		fmt.Fprintf(w, `{"error":"foo bar","error_description":"some message!"}`)
-		return
 	}))
 	defer server.Close()
 	client := NewClient(server.URL, "example-client", "secret")
@@ -111,7 +108,7 @@ func osiamMockHandler(w http.ResponseWriter, r *http.Request) {
 		fmt.Fprintf(w, `{"timestamp":1479572095876,"status":401,"error":"Unauthorized","message":"Full authentication is required to access this resource","path":"/oauth/token"}`)
 		return
 	}
-	b, _ := ioutil.ReadAll(r.Body)
+	b, _ := io.ReadAll(r.Body)
 	if string(b) != "grant_type=password&username=admin&password=koala&scope=ME" {
 		w.WriteHeader(400)
 		fmt.Fprintf(w, `{"error":"invalid_grant","error_description":"some message!"}`)

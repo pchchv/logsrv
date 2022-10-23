@@ -162,7 +162,10 @@ func createMockServer(responses ...mockResponse) *mockServer {
 				server.requests = append(server.requests, r)
 
 				w.WriteHeader(response.status)
-				w.Write([]byte(body))
+				_, err := w.Write([]byte(body))
+				if err != nil {
+					panic(err)
+				}
 			})
 	}
 	return server

@@ -174,7 +174,8 @@ func TestHandler_HandleOauth(t *testing.T) {
 		startedFlow bool,
 		authenticated bool,
 		userInfo model.UserInfo,
-		err error) {
+		err error,
+	) {
 		w.Header().Set("Location", "http://example.com")
 		w.WriteHeader(303)
 		return true, false, model.UserInfo{}, nil
@@ -188,7 +189,8 @@ func TestHandler_HandleOauth(t *testing.T) {
 		startedFlow bool,
 		authenticated bool,
 		userInfo model.UserInfo,
-		err error) {
+		err error,
+	) {
 		return false, true, model.UserInfo{Sub: "marvin"}, nil
 	}
 	recorder = httptest.NewRecorder()
@@ -202,7 +204,8 @@ func TestHandler_HandleOauth(t *testing.T) {
 		startedFlow bool,
 		authenticated bool,
 		userInfo model.UserInfo,
-		err error) {
+		err error,
+	) {
 		return false, false, model.UserInfo{}, errors.New("some error")
 	}
 	recorder = httptest.NewRecorder()
@@ -214,7 +217,8 @@ func TestHandler_HandleOauth(t *testing.T) {
 		startedFlow bool,
 		authenticated bool,
 		userInfo model.UserInfo,
-		err error) {
+		err error,
+	) {
 		return false, false, model.UserInfo{}, nil
 	}
 	recorder = httptest.NewRecorder()
@@ -452,7 +456,10 @@ func TestHandler_ReturnUserInfoJSON(t *testing.T) {
 	Equal(t, 200, recorder.Code)
 	Equal(t, "application/json", recorder.Header().Get("Content-Type"))
 	output := model.UserInfo{}
-	json.Unmarshal(recorder.Body.Bytes(), &output)
+	err = json.Unmarshal(recorder.Body.Bytes(), &output)
+	if err != nil {
+		t.Fatal(err)
+	}
 	Equal(t, input, output)
 }
 
@@ -471,7 +478,10 @@ func TestHandler_ReturnUserInfoJSON_InvalidToken(t *testing.T) {
 	Equal(t, 403, recorder.Code)
 	Equal(t, "application/json", recorder.Header().Get("Content-Type"))
 	output := map[string]interface{}{}
-	json.Unmarshal(recorder.Body.Bytes(), &output)
+	err := json.Unmarshal(recorder.Body.Bytes(), &output)
+	if err != nil {
+		t.Fatal(err)
+	}
 	Equal(t, map[string]interface{}{"error": "Wrong credentials"}, output)
 }
 
@@ -663,7 +673,8 @@ func (m *oauth2ManagerMock) Handle(w http.ResponseWriter, r *http.Request) (
 	startedFlow bool,
 	authenticated bool,
 	userInfo model.UserInfo,
-	err error) {
+	err error,
+) {
 	return m._Handle(w, r)
 }
 

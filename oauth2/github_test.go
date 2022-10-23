@@ -45,7 +45,10 @@ func Test_Github_getUserInfo(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		Equal(t, "token secret", r.Header.Get("Authorization"))
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
-		w.Write([]byte(githubTestUserResponse))
+		_, err := w.Write([]byte(githubTestUserResponse))
+		if err != nil {
+			t.Fatal(err)
+		}
 	}))
 	defer server.Close()
 	githubAPI = server.URL

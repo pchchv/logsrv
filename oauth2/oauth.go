@@ -6,7 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"strings"
@@ -108,7 +108,7 @@ func getAccessToken(cfg Config, state, code string) (TokenInfo, error) {
 	r, _ := http.NewRequest("POST", cfg.TokenURL, strings.NewReader(values.Encode()))
 	cntx, cancel := context.WithTimeout(context.Background(), defaultTimeout)
 	defer cancel()
-	r.WithContext(cntx)
+	_ = r.WithContext(cntx)
 	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	r.Header.Set("Accept", "application/json")
 	resp, err := http.DefaultClient.Do(r)
@@ -119,12 +119,15 @@ func getAccessToken(cfg Config, state, code string) (TokenInfo, error) {
 	if resp.StatusCode != 200 {
 		return TokenInfo{}, fmt.Errorf("error: expected http status 200 on token exchange, but got %v", resp.StatusCode)
 	}
-	body, err := ioutil.ReadAll(resp.Body)
+	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return TokenInfo{}, fmt.Errorf("error reading token exchange response: %q", err)
 	}
 	jsonError := JSONError{}
-	json.Unmarshal(body, &jsonError)
+	err = json.Unmarshal(body, &jsonError)
+	if err != nil {
+		panic(err)
+	}
 	if jsonError.Error != "" {
 		return TokenInfo{}, fmt.Errorf("error: got %q on token exchange", jsonError.Error)
 	}

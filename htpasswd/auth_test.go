@@ -1,7 +1,6 @@
 package htpasswd
 
 import (
-	"io/ioutil"
 	"os"
 	"testing"
 	"time"
@@ -45,7 +44,7 @@ func TestAuth_ReloadFile(t *testing.T) {
 	False(t, authenticated)
 	// The refresh is time based, so we have to wait a second, here
 	time.Sleep(time.Second)
-	err = ioutil.WriteFile(files[0], []byte(`alice:$apr1$IDZSCL/o$N68zaFDDRivjour94OVeB.`), 06644)
+	err = os.WriteFile(files[0], []byte(`alice:$apr1$IDZSCL/o$N68zaFDDRivjour94OVeB.`), 0o6644)
 	NoError(t, err)
 	authenticated, err = auth.Authenticate("bob", "secret")
 	NoError(t, err)
@@ -126,7 +125,7 @@ func TestAuth_Hashes_UnknownAlgoError(t *testing.T) {
 func writeTmpfile(contents ...string) []string {
 	var names []string
 	for _, curContent := range contents {
-		f, err := ioutil.TempFile("", "logsrv_htpasswdtest")
+		f, err := os.CreateTemp("", "logsrv_htpasswdtest")
 		if err != nil {
 			panic(err)
 		}

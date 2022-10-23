@@ -31,7 +31,7 @@ func main() {
 		exit(nil, err)
 	}
 	handlerChain := logging.NewLogMiddleware(h)
-	stop := make(chan os.Signal)
+	stop := make(chan os.Signal, 1)
 	signal.Notify(stop, syscall.SIGINT, syscall.SIGTERM)
 	port := config.Port
 	if port != "" {
@@ -49,7 +49,10 @@ func main() {
 	}()
 	logging.LifecycleStop(appName, <-stop, nil)
 	ctx, ctxCancel := context.WithTimeout(context.Background(), config.GracePeriod)
-	httpSrv.Shutdown(ctx)
+	err = httpSrv.Shutdown(ctx)
+	if err != nil {
+		panic(err)
+	}
 	ctxCancel()
 }
 

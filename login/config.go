@@ -6,7 +6,6 @@ import (
 	"errors"
 	"flag"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"strings"
 	"time"
@@ -88,7 +87,7 @@ func (c *Config) addBackendOpts(providerName, optsKvList string) error {
 func (c *Config) ResolveFileReferences() error {
 	// Try to load the secret from a file, if set
 	if c.JwtSecretFile != "" {
-		secretBytes, err := ioutil.ReadFile(c.JwtSecretFile)
+		secretBytes, err := os.ReadFile(c.JwtSecretFile)
 		if err != nil {
 			return err
 		}
@@ -209,7 +208,10 @@ func readConfig(f *flag.FlagSet, args []string) (*Config, error) {
 	// Fist use the environment settings
 	f.VisitAll(func(f *flag.Flag) {
 		if val, isPresent := os.LookupEnv(envName(f.Name)); isPresent {
-			f.Value.Set(val)
+			err := f.Value.Set(val)
+			if err != nil {
+				panic(err)
+			}
 		}
 	})
 	// Prefer flags over environment settings

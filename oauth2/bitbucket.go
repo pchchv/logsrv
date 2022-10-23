@@ -3,7 +3,7 @@ package oauth2
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 
@@ -73,7 +73,7 @@ func getBitbucketEmails(token TokenInfo) (emails, error) {
 	if resp.StatusCode != 200 {
 		return emails{}, fmt.Errorf("got http status %v on bitbucket get user emails", resp.StatusCode)
 	}
-	b, err := ioutil.ReadAll(resp.Body)
+	b, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return emails{}, fmt.Errorf("error reading bitbucket get user emails: %v", err)
 	}
@@ -102,7 +102,7 @@ var providerBitbucket = Provider{
 		if resp.StatusCode != 200 {
 			return model.UserInfo{}, "", fmt.Errorf("got http status %v on bitbucket get user info", resp.StatusCode)
 		}
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		if err != nil {
 			return model.UserInfo{}, "", fmt.Errorf("error reading bitbucket get user info: %v", err)
 		}
@@ -111,6 +111,9 @@ var providerBitbucket = Provider{
 			return model.UserInfo{}, "", fmt.Errorf("error parsing bitbucket get user info: %v", err)
 		}
 		userEmails, err := getBitbucketEmails(token)
+		if err != nil {
+			panic(err)
+		}
 		return model.UserInfo{
 			Sub:     gu.Username,
 			Picture: fmt.Sprintf(bitbucketAvatarURL, gu.Username),

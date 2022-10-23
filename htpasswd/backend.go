@@ -28,9 +28,7 @@ func init() {
 func BackendFactory(config map[string]string) (login.Backend, error) {
 	var files []string
 	if f, exist := config["file"]; exist {
-		for _, file := range strings.Split(f, ";") {
-			files = append(files, file)
-		}
+		files = append(files, strings.Split(f, ";")...)
 	}
 	if len(files) == 0 {
 		return nil, errors.New(`missing parameter "file" for htpasswd provider`)
@@ -38,7 +36,7 @@ func BackendFactory(config map[string]string) (login.Backend, error) {
 	return NewBackend(files)
 }
 
-// NewBackend creates a new Backend and verifies the parameters.
+// Creates a new Backend and verifies the parameters.
 func NewBackend(filenames []string) (*Backend, error) {
 	auth, err := NewAuth(filenames)
 	return &Backend{

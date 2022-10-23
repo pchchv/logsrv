@@ -3,7 +3,7 @@ package oauth2
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 
@@ -52,7 +52,7 @@ var providerfacebook = Provider{
 		if resp.StatusCode != 200 {
 			return model.UserInfo{}, "", fmt.Errorf("got http status %v on facebook get user info", resp.StatusCode)
 		}
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		if err != nil {
 			return model.UserInfo{}, "", fmt.Errorf("error reading facebook get user info: %v", err)
 		}

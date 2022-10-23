@@ -1,7 +1,6 @@
 package login
 
 import (
-	"io/ioutil"
 	"net/http/httptest"
 	"os"
 	"testing"
@@ -85,9 +84,12 @@ func Test_form_executeError(t *testing.T) {
 }
 
 func Test_form_customTemplate(t *testing.T) {
-	f, err := ioutil.TempFile("", "")
+	f, err := os.CreateTemp("", "")
 	NoError(t, err)
-	f.WriteString(`<html><body>My custom template {{template "login" .}}</body></html>`)
+	_, err = f.WriteString(`<html><body>My custom template {{template "login" .}}</body></html>`)
+	if err != nil {
+		t.Fatal(err)
+	}
 	f.Close()
 	defer os.Remove(f.Name())
 	recorder := httptest.NewRecorder()
@@ -108,9 +110,12 @@ func Test_form_customTemplate(t *testing.T) {
 }
 
 func Test_form_customTemplate_ParseError(t *testing.T) {
-	f, err := ioutil.TempFile("", "")
+	f, err := os.CreateTemp("", "")
 	NoError(t, err)
-	f.WriteString(`<html><body>My custom template {{template "login" `)
+	_, err = f.WriteString(`<html><body>My custom template {{template "login" `)
+	if err != nil {
+		t.Fatal(err)
+	}
 	f.Close()
 	defer os.Remove(f.Name())
 	recorder := httptest.NewRecorder()

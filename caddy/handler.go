@@ -27,7 +27,7 @@ func NewCaddyHandler(next httpserver.Handler, loginHandler *login.Handler, confi
 }
 
 func (h *CaddyHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) (int, error) {
-	//Fetch jwt token. If valid set a Caddy replacer for {user}
+	// Fetch jwt token. If valid set a Caddy replacer for {user}
 	userInfo, valid := h.loginHandler.GetToken(r)
 	if valid {
 		// let upstream middleware (e.g. fastcgi and cgi) know about authenticated

@@ -2,7 +2,7 @@ package login
 
 import (
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
 	"time"
@@ -40,7 +40,10 @@ func (provider *userClaimsProvider) Claims(userInfo model.UserInfo) (jwt.Claims,
 		return nil, err
 	}
 	defer func() {
-		ioutil.ReadAll(resp.Body)
+		_, err := io.ReadAll(resp.Body)
+		if err != nil {
+			panic(err)
+		}
 		resp.Body.Close()
 	}()
 	if resp.StatusCode == http.StatusNotFound {

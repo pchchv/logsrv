@@ -29,7 +29,10 @@ func TestLogstashFormatter(t *testing.T) {
 	var data map[string]interface{}
 	dec := json.NewDecoder(bytes.NewReader(b))
 	dec.UseNumber()
-	dec.Decode(&data)
+	err := dec.Decode(&data)
+	if err != nil {
+		logrus.Panic(err)
+	}
 	// base fields
 	if data["@timestamp"] == "" {
 		t.Error("expected @timestamp to be not empty")

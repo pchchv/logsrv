@@ -39,12 +39,15 @@ func Test_Manager_Positive_Flow(t *testing.T) {
 		Provider:     exampleProvider,
 	}
 	m := NewManager()
-	m.AddConfig(exampleProvider.Name, map[string]string{
+	err := m.AddConfig(exampleProvider.Name, map[string]string{
 		"client_id":     expectedConfig.ClientID,
 		"client_secret": expectedConfig.ClientSecret,
 		"scope":         expectedConfig.Scope,
 		"redirect_uri":  expectedConfig.RedirectURI,
 	})
+	if err != nil {
+		t.Fatal(err)
+	}
 	m.startFlow = func(cfg Config, w http.ResponseWriter) error {
 		startFlowCalled = true
 		startFlowReceivedConfig = cfg
@@ -91,10 +94,13 @@ func Test_Manager_NoAauthOnWrongCode(t *testing.T) {
 	RegisterProvider(exampleProvider)
 	defer UnRegisterProvider(exampleProvider.Name)
 	m := NewManager()
-	m.AddConfig(exampleProvider.Name, map[string]string{
+	err := m.AddConfig(exampleProvider.Name, map[string]string{
 		"client_id":     "foo",
 		"client_secret": "bar",
 	})
+	if err != nil {
+		t.Fatal(err)
+	}
 	m.authenticate = func(cfg Config, r *http.Request) (TokenInfo, error) {
 		authenticateCalled = true
 		return TokenInfo{}, errors.New("code not valid")
@@ -113,11 +119,14 @@ func Test_Manager_NoAauthOnWrongCode(t *testing.T) {
 func Test_Manager_getConfig_ErrorCase(t *testing.T) {
 	r, _ := http.NewRequest("GET", "http://example.com/login", nil)
 	m := NewManager()
-	m.AddConfig("github", map[string]string{
+	err := m.AddConfig("github", map[string]string{
 		"client_id":     "foo",
 		"client_secret": "bar",
 	})
-	_, err := m.GetConfigFromRequest(r)
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = m.GetConfigFromRequest(r)
 	EqualError(t, err, "no oauth configuration for login")
 }
 
@@ -204,18 +213,21 @@ func Test_Manager_redirectUriFromRequest(t *testing.T) {
 func Test_Manager_RedirectURI_Generation(t *testing.T) {
 	var startFlowReceivedConfig Config
 	m := NewManager()
-	m.AddConfig("github", map[string]string{
+	err := m.AddConfig("github", map[string]string{
 		"client_id":     "foo",
 		"client_secret": "bar",
 		"scope":         "bazz",
 	})
+	if err != nil {
+		t.Fatal(err)
+	}
 	m.startFlow = func(cfg Config, w http.ResponseWriter) error {
 		startFlowReceivedConfig = cfg
 		return nil
 	}
 	callURL := "http://example.com/login/github"
 	r, _ := http.NewRequest("GET", callURL, nil)
-	_, _, _, err := m.Handle(httptest.NewRecorder(), r)
+	_, _, _, err = m.Handle(httptest.NewRecorder(), r)
 	NoError(t, err)
 	Equal(t, callURL, startFlowReceivedConfig.RedirectURI)
 }

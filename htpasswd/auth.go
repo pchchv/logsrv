@@ -118,7 +118,10 @@ func reloadIfChanged(a *Auth) {
 		}
 		currentmodTime := fileInfo.ModTime()
 		if currentmodTime != file.modTime {
-			a.parse()
+			err := a.parse()
+			if err != nil {
+				logging.Logger.Panic(err)
+			}
 			return
 		}
 	}

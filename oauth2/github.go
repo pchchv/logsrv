@@ -3,7 +3,7 @@ package oauth2
 import (
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"strings"
 
@@ -44,7 +44,7 @@ var providerGithub = Provider{
 		if resp.StatusCode != 200 {
 			return model.UserInfo{}, "", fmt.Errorf("got http status %v on github get user info", resp.StatusCode)
 		}
-		b, err := ioutil.ReadAll(resp.Body)
+		b, err := io.ReadAll(resp.Body)
 		if err != nil {
 			return model.UserInfo{}, "", fmt.Errorf("error reading github get user info: %v", err)
 		}

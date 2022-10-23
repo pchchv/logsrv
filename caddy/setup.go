@@ -29,7 +29,10 @@ func init() {
 
 // Configures a new logsrv instance
 func setup(c *caddy.Controller) error {
-	logging.Set("info", true)
+	err := logging.Set("info", true)
+	if err != nil {
+		logging.Logger.Panic(err)
+	}
 	for c.Next() {
 		args := c.RemainingArgs()
 		config, err := parseConfig(c)

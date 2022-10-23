@@ -1,7 +1,6 @@
 package login
 
 import (
-	"io/ioutil"
 	"os"
 	"testing"
 
@@ -52,8 +51,14 @@ func Test_newUserClaimsFile_InvalidFile(t *testing.T) {
 }
 
 func Test_newUserClaimsFile_InvalidYAML(t *testing.T) {
-	f, _ := ioutil.TempFile("", "")
-	f.WriteString(invalidClaimsExample)
+	f, err := os.CreateTemp("", "")
+	if err != nil {
+		panic(err)
+	}
+	_, err = f.WriteString(invalidClaimsExample)
+	if err != nil {
+		panic(err)
+	}
 	f.Close()
 	defer os.Remove(f.Name())
 	c, err := newUserClaimsFile(f.Name())
@@ -78,8 +83,14 @@ func Test_newUserClaimsFile_ParseFile(t *testing.T) {
 }
 
 func Test_userClaimsFile_Claims(t *testing.T) {
-	f, _ := ioutil.TempFile("", "")
-	f.WriteString(claimsExample)
+	f, err := os.CreateTemp("", "")
+	if err != nil {
+		panic(err)
+	}
+	_, err = f.WriteString(claimsExample)
+	if err != nil {
+		panic(err)
+	}
 	f.Close()
 	fileName := f.Name()
 	defer os.Remove(f.Name())
@@ -120,8 +131,14 @@ func Test_userClaimsFile_NoMatch(t *testing.T) {
 }
 
 func createClaimsFile(claims string) (string, func()) {
-	f, _ := ioutil.TempFile("", "")
-	f.WriteString(claims)
+	f, err := os.CreateTemp("", "")
+	if err != nil {
+		panic(err)
+	}
+	_, err = f.WriteString(claims)
+	if err != nil {
+		panic(err)
+	}
 	f.Close()
 	return f.Name(), func() { os.Remove(f.Name()) }
 }
